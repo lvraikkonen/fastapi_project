@@ -1,27 +1,43 @@
 from fastapi import FastAPI
-from app.db import base, session
-from app.routers import auth, example
+from fastapi.middleware.cors import CORSMiddleware
+from app.init_db import init_db
+from app.api.v1.endpoints import auth, user, example
+from app.core.config import settings
+from sqlalchemy import create_engine
+
 from contextlib import asynccontextmanager
+from sqlalchemy.orm import Session
 
-app = FastAPI()
+from app.services.user import create_user_sync, get_user_by_username_sync
+from app.schemas.user import UserCreate
+
+# 创建同步引擎
+sync_engine = create_engine(settings.SQLALCHEMY_DATABASE_URI.replace("sqlite+aiosqlite", "sqlite"))
 
 
-# Lifespan context manager
+# 定义生命周期上下文管理器
 @asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Startup code here
-    print("Starting up...")
-    # create database
-    base.Base.metadata.create_all(bind=session.engine)
+async def lifespan_context(app: FastAPI):
+    # 初始化数据库
+    init_db()
     yield
-    # Shutdown code here
-    print("Shutting down...")
+    # 在这里可以添加关闭数据库连接等清理操作
 
-# Assign the lifespan context manager to the app
-app.router.lifespan_context = lifespan
+# 创建 FastAPI 实例
+app = FastAPI(title="My FastAPI Project", version="1.0.0", lifespan=lifespan_context)
 
-app.include_router(example.router, prefix='/api/v1', tags=["examples"])
+# 配置 CORS 中间件
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # 可以根据需要设置允许的源
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(example.router, prefix="/api/v1/examples", tags=["examples"])
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
+app.include_router(user.router, prefix="/api/v1/users", tags=["users"])
 
 
 if __name__ == "__main__":

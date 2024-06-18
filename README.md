@@ -16,33 +16,49 @@
 首先定义项目的目录结构：
 
 ```
-fastapi_project/
+my_fastapi_project/
 ├── app/
 │   ├── __init__.py
-│   ├── main.py
-│   ├── services/
-│   │   ├── __init__.py
-│   │   ├── example_service.py
-│   ├── models/
-│   │   ├── __init__.py
-│   │   ├── models.py
-│   ├── routers/
-│   │   ├── __init__.py
-│   │   ├── auth.py
-│   │   ├── example.py
 │   ├── core/
 │   │   ├── __init__.py
-│   │   ├── config.py
-│   │   ├── security.py
-│   └── db/
-│       ├── __init__.py
-│       ├── base.py
-│       ├── crud.py
-│       └── session.py
+│   │   └── config.py
+│   │   └── security.py
+│   ├── db/
+│   │   ├── __init__.py
+│   │   └── base.py
+│   │   └── database.py
+│   ├── init_db.py
+│   ├── main.py
+│   ├── models/
+│   │   ├── __init__.py
+│   │   ├── user.py
+│   │   └── example.py
+│   ├── schemas/
+│   │   ├── __init__.py
+│   │   ├── token.py
+│   │   ├── user.py
+│   │   └── example.py
+│   ├── services/
+│   │   ├── __init__.py
+│   │   ├── auth.py
+│   │   ├── user.py
+│   │   └── example.py
+│   ├── api/
+│   │   ├── __init__.py
+│   │   ├── deps.py
+│   │   ├── api_v1/
+│   │   │   ├── __init__.py
+│   │   │   ├── endpoints/
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── auth.py
+│   │   │   │   ├── user.py
+│   │   │   │   └── example.py
 ├── tests/
 │   ├── __init__.py
-│   ├── test_main.py
-│   ├── test_auth.py
+│   ├── conftest.py
+│   └── test_example.py
+│   └── test_user.py
+├── .env
 ├── pyproject.toml
 └── README.md
 ```
