@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.init_db import init_db
-from app.api.v1.endpoints import auth, user, example
+from app.api.v1.endpoints import auth, user, example, nlp
 from app.core.config import settings
 from sqlalchemy import create_engine
 
@@ -38,6 +38,7 @@ app.add_middleware(
 app.include_router(example.router, prefix="/api/v1/examples", tags=["examples"])
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(user.router, prefix="/api/v1/users", tags=["users"])
+app.include_router(nlp.router, prefix="/api/v1/nlp", tags=["natural language query"])
 
 
 if __name__ == "__main__":

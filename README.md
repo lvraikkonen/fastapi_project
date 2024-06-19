@@ -38,11 +38,16 @@ my_fastapi_project/
 │   │   ├── token.py
 │   │   ├── user.py
 │   │   └── example.py
+│   │   └── query.py
 │   ├── services/
 │   │   ├── __init__.py
 │   │   ├── auth.py
 │   │   ├── user.py
 │   │   └── example.py
+│   │   ├── nlp.py
+│   ├── utils/
+│   │   ├── __init__.py
+│   │   ├── query_tool.py
 │   ├── api/
 │   │   ├── __init__.py
 │   │   ├── deps.py
