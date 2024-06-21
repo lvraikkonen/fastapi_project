@@ -2,25 +2,22 @@ from datetime import timedelta
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import Session
-
 from app.schemas.token import Token
 from app.schemas.user import User, UserCreate
 from app.models.user import User as UserInDB
-
 from app.core.config import settings
-from app.db.database import get_db
-from app.services.auth import authenticate_user, get_current_active_user
+from app.services.auth import authenticate_user
 from app.services.user import create_user, get_user_by_username, get_user_by_email
 from app.core.security import create_access_token
+from app.api.dependencies import get_db_session, get_active_user
 
 router = APIRouter()
 
 
 @router.post("/token", response_model=Token)
-async def login_for_access_token(
+async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db_session)
 ):
     user = await authenticate_user(db, form_data.username, form_data.password)
     if not user:
@@ -39,14 +36,8 @@ async def login_for_access_token(
 @router.post("/register", response_model=User)
 async def register_user(
     user: UserCreate,
-    db: AsyncSession = Depends(get_db),
-    current_user: UserInDB = Depends(get_current_active_user)
+    db: AsyncSession = Depends(get_db_session)
 ):
-    if not current_user.is_superuser:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="The user doesn't have enough privileges"
-        )
     # 检查用户名是否已经存在
     existing_user = await get_user_by_username(db, user.username)
     if existing_user:
@@ -66,5 +57,5 @@ async def register_user(
 
 
 @router.get("/me", response_model=User)
-async def read_users_me(current_user: UserInDB = Depends(get_current_active_user)):
+async def read_users_me(current_user: UserInDB = Depends(get_active_user)):
     return current_user

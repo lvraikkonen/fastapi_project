@@ -4,9 +4,11 @@ from jose import JWTError
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.security import verify_password, decode_access_token
 from app.models.user import User
+from app.models.role import Role
+from app.models.permission import Permission
 from app.schemas.token import TokenData
 from app.db.database import get_db
-from app.services.user import get_user_by_username
+from app.services.user import get_user_by_username, get_user_roles, get_user_permissions
 
 # 定义 OAuth2 密码流，用于获取访问令牌
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
@@ -63,5 +65,29 @@ async def get_current_active_user(current_user: User = Depends(get_current_user)
     :raises HTTPException: 如果用户不活跃，抛出 400 异常
     """
     if not current_user.is_active:
-        raise HTTPException(status_code=400, detail="Inactive user")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Inactive user",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     return current_user
+
+
+async def get_current_user_roles(current_user: User, db: AsyncSession) -> list[Role]:
+    roles = await get_user_roles(db, current_user.id)
+    if not roles:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User does not have any roles assigned",
+        )
+    return roles
+
+
+async def get_current_user_permissions(current_user: User, db: AsyncSession) -> list[Permission]:
+    permissions = await get_user_permissions(db, current_user.id)
+    if not permissions:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User does not have any permissions assigned",
+        )
+    return permissions

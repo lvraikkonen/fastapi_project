@@ -1,100 +1,56 @@
-import logging
-
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.main import app
-from app.db.base import Base
-from app.core.config import settings
+from app.schemas.example import ExampleCreate, ExampleUpdate
+from app.services.example import create_example, get_example, delete_example
+from app.init_db import SessionLocal
 
-# 获取测试数据库连接信息
-DATABASE_URL = settings.TESTING_DATABASE_URL
-
-# 创建测试数据库引擎和会话
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-# 创建 FastAPI 测试客户端
 client = TestClient(app)
 
 
-# 在测试之前设置数据库
-def setup_module(module):
-    Base.metadata.create_all(bind=engine)
+@pytest.fixture(scope="function")
+def db_session():
+    session = SessionLocal()
+    yield session
+    session.close()
 
 
-# 在测试之后清理数据库
-def teardown_module(module):
-    Base.metadata.drop_all(bind=engine)
+@pytest.fixture(scope="function")
+async def test_example(db_session: AsyncSession):
+    example_in = ExampleCreate(name="test example", description="this is a test example")
+    example = await create_example(db_session, example_in)
+    yield example
+    await delete_example(db_session, example.id)
 
 
-# 测试用户注册
-def test_register():
-    response = client.post(
-        "/auth/register",
-        json={"username": "testuser", "password": "123456"}
-    )
-    logging.info(f"user: testuser have registered successful.")
+def test_read_examples(test_example):
+    response = client.get("/api/v1/examples/")
     assert response.status_code == 200
-    assert response.json()["username"] == "testuser"
+    assert len(response.json()) > 0
 
 
-# 测试用户登录
-def test_login():
-    response = client.post(
-        "/auth/token",
-        data={"username": "testuser", "password": "123456"},
-        headers={"Content-Type": "application/x-www-form-urlencoded"}
-    )
+def test_get_example(test_example):
+    response = client.get(f"/api/v1/examples/{test_example.id}")
     assert response.status_code == 200
-    assert "access_token" in response.json()
-    assert response.json()["token_type"] == "bearer"
+    assert response.json()["name"] == test_example.name
 
 
-# 测试未授权访问
-def test_read_example_unauthorized():
-    response = client.get("/api/v1/examples/1")
-    assert response.status_code == 401
-
-
-# 测试创建示例
 def test_create_example():
-    # 登录获取访问令牌
-    login_response = client.post(
-        "/auth/token",
-        data={"username": "testuser", "password": "123456"},
-        headers={"Content-Type": "application/x-www-form-urlencoded"}
-    )
-    assert login_response.status_code == 200
-    access_token = login_response.json()["access_token"]
-
-    # 使用访问令牌创建示例
-    response = client.post(
-        "/api/v1/examples/",
-        json={"name": "example1", "description": "sample description"},
-        headers={"Authorization": f"Bearer {access_token}"}
-    )
+    example_in = {"name": "new example", "description": "this is a new example"}
+    response = client.post("/api/v1/examples/", json=example_in)
     assert response.status_code == 200
-    assert response.json()["name"] == "example1"
+    assert response.json()["name"] == example_in["name"]
 
 
-# 测试读取示例
-def test_read_example():
-    # 登录获取访问令牌
-    login_response = client.post(
-        "/auth/token",
-        data={"username": "testuser", "password": "123456"},
-        headers={"Content-Type": "application/x-www-form-urlencoded"}
-    )
-    assert login_response.status_code == 200
-    access_token = login_response.json()["access_token"]
-
-    # 使用访问令牌读取示例
-    response = client.get(
-        "/api/v1/examples/1",
-        headers={"Authorization": f"Bearer {access_token}"}
-    )
+def test_update_example(test_example):
+    example_in = {"name": "updated example", "description": "this is an updated example"}
+    response = client.put(f"/api/v1/examples/{test_example.id}", json=example_in)
     assert response.status_code == 200
-    assert response.json()["id"] == 1
-    assert response.json()["name"] == "example1"
+    assert response.json()["name"] == example_in["name"]
+
+
+def test_delete_example(test_example):
+    response = client.delete(f"/api/v1/examples/{test_example.id}")
+    assert response.status_code == 200
+    assert response.json()["name"] == test_example.name

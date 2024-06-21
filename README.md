@@ -5,10 +5,12 @@
 1. 把接口api作为Service分离开 
 2. 接口功能是从数据库中读取一张表tbl_example的内容 
 3. 将数据库连接等配置信息独立出来 
-4. 使用poetry管理项目的python包 
-5. 增加注册服务，使用户能够注册新账户
-6. 增加权限认证功能，用户可以通过发送 POST 请求到 /auth/token 路由使用注册的新用户登录，并提供用户名和密码来获取访问令牌。只有通过认证的用户才能访问api 
-7. 编写一些单元测试用例
+4. 实现基于`user-role-permission`模型的 RBAC 权限管理
+5. 使用poetry管理项目的python包 
+6. 增加注册服务，使用户能够注册新账户
+7. 增加权限认证功能，用户可以通过发送 POST 请求到 /auth/token 路由使用注册的新用户登录，并提供用户名和密码来获取访问令牌。只有通过认证的用户才能访问api 
+8. 编写一些单元测试用例
+9. 使用React框架创建一个简单的前端界面
 
 
 
@@ -50,7 +52,7 @@ my_fastapi_project/
 │   │   ├── query_tool.py
 │   ├── api/
 │   │   ├── __init__.py
-│   │   ├── deps.py
+│   │   ├── dependencies.py
 │   │   ├── api_v1/
 │   │   │   ├── __init__.py
 │   │   │   ├── endpoints/

@@ -11,6 +11,10 @@ class Settings(BaseSettings):
     SECRET_KEY: str
     ALGORITHM: str = os.getenv("ALGORITHM")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES")
+    POOL_SIZE: int = int(os.getenv("POOL_SIZE", 10))
+    MAX_OVERFLOW: int = int(os.getenv("MAX_OVERFLOW", 20))
+    POOL_TIMEOUT: int = int(os.getenv("POOL_TIMEOUT", 30))
+    POOL_RECYCLE: int = int(os.getenv("POOL_RECYCLE", 1800))
 
     class Config:
         env_file = ".env"

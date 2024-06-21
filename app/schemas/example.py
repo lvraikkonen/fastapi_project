@@ -1,5 +1,5 @@
 from datetime import datetime
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class ExampleBase(BaseModel):
@@ -8,8 +8,8 @@ class ExampleBase(BaseModel):
     - name: 示例名称
     - description: 示例描述
     """
-    name: str
-    description: str
+    name: str = Field(..., min_length=1, max_length=100)  # 添加长度限制
+    description: str = Field(..., min_length=1, max_length=255)  # 添加长度限制
 
 
 class ExampleCreate(ExampleBase):

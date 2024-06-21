@@ -1,27 +1,19 @@
+import asyncio
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.init_db import init_db
-from app.api.v1.endpoints import auth, user, example, nlp
-from app.core.config import settings
-from sqlalchemy import create_engine
+from app.api.v1.endpoints import auth, user, example, nlp, role, permission
 
 from contextlib import asynccontextmanager
-from sqlalchemy.orm import Session
-
-from app.services.user import create_user_sync, get_user_by_username_sync
-from app.schemas.user import UserCreate
-
-# 创建同步引擎
-sync_engine = create_engine(settings.SQLALCHEMY_DATABASE_URI.replace("sqlite+aiosqlite", "sqlite"))
 
 
-# 定义生命周期上下文管理器
 @asynccontextmanager
 async def lifespan_context(app: FastAPI):
-    # 初始化数据库
-    init_db()
+    # 在应用启动时同步初始化数据库
+    loop = asyncio.get_event_loop()
+    await loop.run_in_executor(None, init_db)
     yield
-    # 在这里可以添加关闭数据库连接等清理操作
+    # 在应用关闭时执行清理操作（如果需要）
 
 # 创建 FastAPI 实例
 app = FastAPI(title="My FastAPI Project", version="1.0.0", lifespan=lifespan_context)
@@ -39,6 +31,13 @@ app.include_router(example.router, prefix="/api/v1/examples", tags=["examples"])
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(user.router, prefix="/api/v1/users", tags=["users"])
 app.include_router(nlp.router, prefix="/api/v1/nlp", tags=["natural language query"])
+app.include_router(role.router, prefix="/roles", tags=["roles"])
+app.include_router(permission.router, prefix="/permissions", tags=["permissions"])
+
+
+@app.get("/")
+async def root():
+    return {"message": "Welcome to the API"}
 
 
 if __name__ == "__main__":

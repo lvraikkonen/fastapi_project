@@ -14,7 +14,7 @@ class Example(Base):
     __tablename__ = "tbl_examples"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, index=True)
-    description = Column(String, index=True)
+    name = Column(String(100), index=True)  # 添加长度限制
+    description = Column(String(255), index=True)  # 添加长度限制
     created_at = Column(DateTime, default=func.now(), nullable=False)
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now(), nullable=False)

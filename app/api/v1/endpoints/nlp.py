@@ -2,7 +2,7 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.db.database import get_db
+from app.api.dependencies import get_db_session
 from app.schemas.query import QueryRequest, QueryResponse
 from app.services.nlp import process_nlp_query_with_db
 from dotenv import load_dotenv
@@ -17,7 +17,7 @@ router = APIRouter()
 
 
 @router.post("/nlp_query", response_model=QueryResponse)
-def nlp_query_endpoint(request: QueryRequest, db: AsyncSession = Depends(get_db)):
+def nlp_query_endpoint(request: QueryRequest, db: AsyncSession = Depends(get_db_session)):
     try:
         result = process_nlp_query_with_db(request.query, DATABASE_URL)
         logger.info(f"get the result: {result}")

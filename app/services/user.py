@@ -1,7 +1,8 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 from sqlalchemy.future import select
-from app.models.user import User
+from app.models.user import User, user_roles
+from app.models.role import Role
 from app.schemas.user import UserCreate, UserUpdate
 from app.core.security import get_password_hash
 
@@ -105,6 +106,54 @@ async def delete_user(db: AsyncSession, user_id: int):
     await db.delete(db_user)
     await db.commit()
     return db_user
+
+
+async def get_user_roles(db: AsyncSession, user_id: int):
+    """
+    获取用户的角色列表
+    """
+    result = await db.execute(
+        select(Role).join(user_roles).filter(user_roles.c.user_id == user_id)
+    )
+    return result.scalars().all()
+
+
+async def assign_role_to_user(db: AsyncSession, user_id: int, role_id: int):
+    """
+    为用户分配角色
+    """
+    user = await get_user(db, user_id)
+    role = await db.get(Role, role_id)
+    if not user or not role:
+        return None
+    user.roles.append(role)
+    await db.commit()
+    return user
+
+
+async def remove_role_from_user(db: AsyncSession, user_id: int, role_id: int):
+    """
+    从用户移除角色
+    """
+    user = await get_user(db, user_id)
+    if not user:
+        return None
+    role = await db.get(Role, role_id)
+    if role in user.roles:
+        user.roles.remove(role)
+        await db.commit()
+    return user
+
+
+async def get_user_permissions(db: AsyncSession, user_id: int):
+    """
+    获取用户的权限列表
+    """
+    roles = await get_user_roles(db, user_id)
+    permissions = []
+    for role in roles:
+        permissions.extend(role.permissions)
+    return permissions
 
 
 # 同步函数
